@@ -6,9 +6,9 @@ import sbtcrossproject.CrossPlugin.autoImport.*
 import scoverage.ScoverageKeys._
 
 object BuildHelper {
-  val Scala213: String = "2.13.18"
-  val Scala33: String  = "3.3.7" // LTS
-  val Scala3: String   = "3.7.4"
+  val Scala213: String   = "2.13.18"
+  val Scala3LTS: String  = "3.3.7" // LTS
+  val Scala3Next: String = "3.7.4"
 
   lazy val isRelease: Boolean = {
     val value = sys.env.contains("CI_RELEASE_MODE")
@@ -152,7 +152,10 @@ object BuildHelper {
     }
   )
 
-  def stdSettings(prjName: String, scalaVersions: Seq[String] = Seq(Scala3, Scala33, Scala213)): Seq[Def.Setting[?]] =
+  def stdSettings(
+    prjName: String,
+    scalaVersions: Seq[String] = Seq(Scala3LTS, Scala3Next, Scala213)
+  ): Seq[Def.Setting[?]] =
     Seq(
       name := prjName,
       // For Scala 3.7+, publish this module/artifact as "zio-blocks-next-*" (project name remains prjName)
