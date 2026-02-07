@@ -411,15 +411,25 @@ object TypeIdMacros {
     }
   }
 
-  private def analyzeBaseTypes(using Quotes)(sym: quotes.reflect.Symbol): List[zio.blocks.typeid.TypeRepr] = {
-    val baseClasses = sym.typeRef.baseClasses.filterNot { base =>
-      base == sym ||
-      base.fullName == "scala.Any" ||
-      base.fullName == "scala.AnyRef" ||
-      base.fullName == "java.lang.Object" ||
-      base.fullName == "scala.Matchable"
-    }
+  private val filteredBaseTypes = Set(
+    "scala.Any",
+    "scala.AnyRef",
+    "java.lang.Object",
+    "scala.Matchable",
+    "scala.Product",
+    "scala.Equals",
+    "scala.deriving.Mirror",
+    "scala.deriving.Mirror.Product",
+    "scala.deriving.Mirror.Singleton",
+    "scala.deriving.Mirror.Sum",
+    "java.io.Serializable"
+  )
 
+  private def isFilteredBaseClass(using Quotes)(base: quotes.reflect.Symbol, sym: quotes.reflect.Symbol): Boolean =
+    base == sym || filteredBaseTypes.contains(base.fullName)
+
+  private def analyzeBaseTypes(using Quotes)(sym: quotes.reflect.Symbol): List[zio.blocks.typeid.TypeRepr] = {
+    val baseClasses = sym.typeRef.baseClasses.filterNot(isFilteredBaseClass(_, sym))
     baseClasses.map(base => analyzeTypeReprMinimal(base.typeRef))
   }
 
@@ -1319,13 +1329,7 @@ object TypeIdMacros {
   private def buildBaseTypesMinimal(using
     Quotes
   )(sym: quotes.reflect.Symbol): Expr[List[zio.blocks.typeid.TypeRepr]] = {
-    val baseClasses = sym.typeRef.baseClasses.filterNot { base =>
-      base == sym ||
-      base.fullName == "scala.Any" ||
-      base.fullName == "scala.AnyRef" ||
-      base.fullName == "java.lang.Object" ||
-      base.fullName == "scala.Matchable"
-    }
+    val baseClasses = sym.typeRef.baseClasses.filterNot(isFilteredBaseClass(_, sym))
 
     val baseExprs = baseClasses.map { base =>
       buildTypeReprMinimal(base.typeRef)
